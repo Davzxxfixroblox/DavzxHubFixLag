@@ -1,1 +1,409 @@
---teste
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+-- Espera segura por LocalPlayer
+local LocalPlayer = Players.LocalPlayer
+if not LocalPlayer then
+	LocalPlayer = Players.PlayerAdded:Wait()
+end
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+local function new(class, props)
+	local obj = Instance.new(class)
+	if props then
+		for k, v in pairs(props) do
+			if k ~= "Parent" then
+				pcall(function() obj[k] = v end)
+			end
+		end
+		if props.Parent then
+			pcall(function() obj.Parent = props.Parent end)
+		end
+	end
+	return obj
+end
+
+-- cleanup old GUIs
+for _, name in ipairs({"DavzxFixLagGui_v2", "DavzxFixLagGui_v3", "DavzxFixLagGui_v4"}) do
+	local ex = PlayerGui:FindFirstChild(name)
+	if ex then ex:Destroy() end
+end
+
+local screenGui = new("ScreenGui", {
+	Name = "DavzxFixLagGui_v4",
+	Parent = PlayerGui,
+	ResetOnSpawn = false,
+	ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+})
+
+-- Main window
+local main = new("Frame", {
+	Name = "Main",
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.new(0.5, 0, 0.45, 0),
+	Size = UDim2.new(0, 820, 0, 520),
+	BackgroundColor3 = Color3.fromRGB(25, 27, 29),
+	BorderSizePixel = 0,
+	Parent = screenGui,
+})
+new("UICorner", { Parent = main, CornerRadius = UDim.new(0, 10) })
+main.ClipsDescendants = true
+
+-- Topbar
+local topbar = new("Frame", { Parent = main, Size = UDim2.new(1, 0, 0, 48), BackgroundTransparency = 1 })
+local title = new("TextLabel", { Parent = topbar, Text = "Davzx Fix Lag", Font = Enum.Font.GothamBold, TextSize = 18, TextColor3 = Color3.fromRGB(230, 230, 230), BackgroundTransparency = 1, Position = UDim2.new(0, 14, 0, 6), Size = UDim2.new(0, 260, 0, 28), TextXAlignment = Enum.TextXAlignment.Left })
+local subtitle = new("TextLabel", { Parent = topbar, Text = "Gerenciador de scripts", Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Color3.fromRGB(160, 165, 170), BackgroundTransparency = 1, Position = UDim2.new(0, 14, 0, 28), Size = UDim2.new(0, 260, 0, 18), TextXAlignment = Enum.TextXAlignment.Left })
+
+-- Close (X) button
+local btnClose = new("TextButton", {
+	Parent = topbar,
+	Name = "Close",
+	Text = "X",
+	Font = Enum.Font.GothamBold,
+	TextSize = 16,
+	TextColor3 = Color3.fromRGB(220, 220, 220),
+	BackgroundColor3 = Color3.fromRGB(40, 42, 44),
+	Size = UDim2.new(0, 36, 0, 28),
+	Position = UDim2.new(1, -46, 0, 10),
+	AutoButtonColor = true,
+	BorderSizePixel = 0,
+})
+new("UICorner", { Parent = btnClose, CornerRadius = UDim.new(0, 6) })
+
+-- Minimize button
+local btnMin = new("TextButton", { Parent = topbar, Name = "Min", Text = "—", Font = Enum.Font.GothamBold, TextSize = 20, TextColor3 = Color3.fromRGB(220, 220, 220), BackgroundColor3 = Color3.fromRGB(40, 42, 44), Size = UDim2.new(0, 36, 0, 28), Position = UDim2.new(1, -92, 0, 10), AutoButtonColor = true, BorderSizePixel = 0 })
+new("UICorner", { Parent = btnMin, CornerRadius = UDim.new(0, 6) })
+
+-- Sidebar (categories)
+local sidebar = new("Frame", { Parent = main, Name = "Sidebar", Size = UDim2.new(0, 180, 1, -56), Position = UDim2.new(0, 12, 0, 56), BackgroundColor3 = Color3.fromRGB(18, 20, 22), BorderSizePixel = 0 })
+new("UICorner", { Parent = sidebar, CornerRadius = UDim.new(0, 8) })
+new("TextLabel", { Parent = sidebar, Text = "Menu", Font = Enum.Font.GothamBold, TextSize = 12, TextColor3 = Color3.fromRGB(170, 170, 170), BackgroundTransparency = 1, Position = UDim2.new(0, 12, 0, 10), Size = UDim2.new(1, -24, 0, 20), TextXAlignment = Enum.TextXAlignment.Left })
+local catHolder = new("ScrollingFrame", { Parent = sidebar, Name = "Categories", BackgroundTransparency = 1, Size = UDim2.new(1, -24, 1, -56), Position = UDim2.new(0, 12, 0, 36), ScrollBarThickness = 6, CanvasSize = UDim2.new(0,0,0,0) })
+local catLayout = new("UIListLayout", { Parent = catHolder, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 8) })
+catLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+
+-- Content
+local content = new("Frame", { Parent = main, Name = "Content", Size = UDim2.new(1, -212, 1, -56), Position = UDim2.new(0, 200, 0, 56), BackgroundColor3 = Color3.fromRGB(14, 16, 18), BorderSizePixel = 0 })
+new("UICorner", { Parent = content, CornerRadius = UDim.new(0, 8) })
+local contentHeader = new("Frame", { Parent = content, Size = UDim2.new(1, 0, 0, 56), BackgroundTransparency = 1 })
+local currentCatLabel = new("TextLabel", { Parent = contentHeader, Text = "Main", Font = Enum.Font.GothamBold, TextSize = 16, TextColor3 = Color3.fromRGB(230, 230, 230), BackgroundTransparency = 1, Position = UDim2.new(0, 12, 0, 12), Size = UDim2.new(0.6, 0, 0, 28), TextXAlignment = Enum.TextXAlignment.Left })
+
+-- Scripts list / main content holder
+local scriptsFrame = new("ScrollingFrame", { Parent = content, Name = "ScriptsList", BackgroundTransparency = 1, Size = UDim2.new(1, -24, 1, -80), Position = UDim2.new(0, 12, 0, 68), ScrollBarThickness = 8, CanvasSize = UDim2.new(0,0,0,0) })
+local scriptsLayout = new("UIListLayout", { Parent = scriptsFrame, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 10) })
+scriptsLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+
+-- Data
+local selectedCategory = "Main"
+local categories = {"Main", "Melhorias", "Jogador", "Extras"}
+local scriptsData = {} -- {id, name, category, preview, enabled, originals, enableFunc, disableFunc}
+
+-- helpers
+local function clearChildren(parent)
+	for _, c in ipairs(parent:GetChildren()) do
+		if not (c:IsA("UIListLayout") or c:IsA("UIPadding") or c:IsA("UIScale") or c:IsA("UIGridLayout")) then
+			c:Destroy()
+		end
+	end
+end
+
+-- detect executor (tentativa por várias heurísticas)
+local function detectExecutor()
+	-- tentativa direta com identifyexecutor (muitos exploits possuem)
+	local ok, res = pcall(function()
+		if type(identifyexecutor) == "function" then
+			return identifyexecutor()
+		end
+	end)
+	if ok and type(res) == "string" and res ~= "" then
+		return res
+	end
+
+	-- heurísticas conhecidas
+	if type(syn) == "table" or type(syn) == "userdata" then
+		-- Synapse X geralmente expõe 'syn'
+		-- Tentar pegar versão
+		local ver = "Synapse X"
+		if syn and type(syn) == "table" and syn.version then
+			ver = ver .. " " .. tostring(syn.version)
+		end
+		return ver
+	end
+	if rawget(_G, "KRNL_LOADED") or rawget(_G, "KRNL") then
+		return "KRNL"
+	end
+	if rawget(_G, "is_sirhurt_closure") then
+		return "SirHurt"
+	end
+	if rawget(_G, "secure_load") then
+		return "SecureLoad"
+	end
+	-- WeAreDevs or Protosmasher
+	if rawget(_G, "protosmasher") or rawget(_G, "PROTOSMASHER_LOADED") then
+		return "ProtoSmasher"
+	end
+	-- fallback: check for common functions
+	if type(getexecutor) == "function" then
+		local ok2, name = pcall(getexecutor)
+		if ok2 and type(name) == "string" and name ~= "" then
+			return name
+		end
+		return "Unknown (getexecutor)"
+	end
+	return "Unknown"
+end
+
+-- tenta obter uma "versão" do executor (heurística)
+local function detectExecutorVersion()
+	-- se identifyexecutor retornou algo detalhado, use
+	local ok, res = pcall(function()
+		if type(identifyexecutor) == "function" then
+			return identifyexecutor()
+		end
+	end)
+	if ok and type(res) == "string" and res ~= "" then
+		return res
+	end
+	-- sinapse tem syn.version
+	if syn and type(syn) == "table" and syn.version then
+		return tostring(syn.version)
+	end
+	-- KRNL não costuma expor versão; retornar Unknown
+	return "Unknown"
+end
+
+-- Função para criar o painel "Main" com avatar e supported info
+local function showMainInfo()
+	clearChildren(scriptsFrame)
+
+	-- Container para layout (dois painéis)
+	local container = new("Frame", { Parent = scriptsFrame, Size = UDim2.new(1, 0, 0, 360), BackgroundTransparency = 1 })
+	new("UICorner", { Parent = container, CornerRadius = UDim.new(0, 6) })
+
+	-- Left column
+	local left = new("Frame", { Parent = container, Size = UDim2.new(0.62, 0, 1, 0), Position = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1 })
+	-- Info Main header
+	new("TextLabel", { Parent = left, Text = "Info Main", Font = Enum.Font.GothamBold, TextSize = 14, TextColor3 = Color3.fromRGB(210,210,210), BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0, 0), Size = UDim2.new(1, 0, 0, 24), TextXAlignment = Enum.TextXAlignment.Left })
+
+	-- Avatar frame (com ImageLabel preenchida com o avatar do usuário)
+	local avatarFrame = new("Frame", { Parent = left, Position = UDim2.new(0, 0, 0, 28), Size = UDim2.new(1, 0, 0, 160), BackgroundColor3 = Color3.fromRGB(23,25,27), BorderSizePixel = 0 })
+	new("UICorner", { Parent = avatarFrame, CornerRadius = UDim.new(0,6) })
+
+	local avatarImg = new("ImageLabel", {
+		Parent = avatarFrame,
+		Size = UDim2.new(0, 120, 0, 120),
+		Position = UDim2.new(0.02, 0, 0.1, 0),
+		BackgroundTransparency = 1,
+		Image = "",
+		ScaleType = Enum.ScaleType.Fit,
+	})
+	-- Tentar obter imagem do avatar do usuário
+	do
+		local ok, url = pcall(function()
+			-- HeadShot costuma ficar bom; tamanho máximo tem opção Size420x420
+			return Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+		end)
+		if ok and type(url) == "string" and url ~= "" then
+			avatarImg.Image = url
+		else
+			-- fallback: usar HumanoidDescription/Thumbnail não disponível — deixar transparente ou placeholder escuro
+			avatarImg.BackgroundColor3 = Color3.fromRGB(40,40,40)
+		end
+	end
+
+	-- Container de seções (Main Credits, Version, Support)
+	local sectionsContainer = new("Frame", { Parent = left, Position = UDim2.new(0, 0, 0, 200), Size = UDim2.new(1, 0, 0, 152), BackgroundTransparency = 1 })
+	local secLayout = new("UIListLayout", { Parent = sectionsContainer, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 8) })
+
+	local function makeSection(parent, titleText, titleColor)
+		local section = new("Frame", { Parent = parent, Size = UDim2.new(1, 0, 0, 64), BackgroundTransparency = 1 })
+		new("TextLabel", { Parent = section, Text = titleText, Font = Enum.Font.GothamBold, TextSize = 13, TextColor3 = titleColor or Color3.fromRGB(200,200,200), BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0, 6), Size = UDim2.new(1, 0, 0, 18), TextXAlignment = Enum.TextXAlignment.Left })
+		local content = new("TextLabel", { Parent = section, Text = "", Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Color3.fromRGB(175,175,175), BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0, 28), Size = UDim2.new(1, 0, 0, 30), TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left })
+		return section, content
+	end
+
+	local _, creditsContent = makeSection(sectionsContainer, "Main Credits", Color3.fromRGB(220, 40, 80))
+	creditsContent.Text = "Script Criado Por Davzx & Sua Equipe."
+
+	local _, versionContent = makeSection(sectionsContainer, "Version", Color3.fromRGB(60,120,220))
+	versionContent.Text = "Versão V1, Versão beta, em breve novos updates."
+
+	local _, supportContent = makeSection(sectionsContainer, "Support", Color3.fromRGB(160,160,160))
+	supportContent.Text = "" -- vazio por enquanto
+
+	-- Right column (Supported)
+	local right = new("Frame", { Parent = container, Size = UDim2.new(0.36, 0, 1, 0), Position = UDim2.new(0.64, 12, 0, 0), BackgroundTransparency = 1 })
+	new("TextLabel", { Parent = right, Text = "Supported", Font = Enum.Font.GothamBold, TextSize = 14, TextColor3 = Color3.fromRGB(210,210,210), BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0, 0), Size = UDim2.new(1, 0, 0, 24), TextXAlignment = Enum.TextXAlignment.Left })
+
+	local supportedBox = new("Frame", { Parent = right, Position = UDim2.new(0, 0, 0, 28), Size = UDim2.new(1, 0, 0, 300), BackgroundColor3 = Color3.fromRGB(23,25,27), BorderSizePixel = 0 })
+	new("UICorner", { Parent = supportedBox, CornerRadius = UDim.new(0,6) })
+	new("UIPadding", { Parent = supportedBox, PaddingLeft = UDim.new(0,8), PaddingTop = UDim.new(0,8) })
+	local supLayout = new("UIListLayout", { Parent = supportedBox, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0,6) })
+
+	-- Preencher informações de Supported: executor e possível versão do cliente/executor
+	local executorName = detectExecutor()
+	local executorVersion = detectExecutorVersion()
+
+	local header1 = new("TextLabel", { Parent = supportedBox, Text = "Executor Info:", Font = Enum.Font.GothamBold, TextSize = 13, TextColor3 = Color3.fromRGB(235,105,155), BackgroundTransparency = 1, Size = UDim2.new(1, -16, 0, 18), TextXAlignment = Enum.TextXAlignment.Left })
+	local exLabel = new("TextLabel", { Parent = supportedBox, Text = "Executor: " .. tostring(executorName), Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Color3.fromRGB(200,200,200), BackgroundTransparency = 1, Size = UDim2.new(1, -16, 0, 18), TextXAlignment = Enum.TextXAlignment.Left })
+
+	local header2 = new("TextLabel", { Parent = supportedBox, Text = "Client Version:", Font = Enum.Font.GothamBold, TextSize = 13, TextColor3 = Color3.fromRGB(200,160,50), BackgroundTransparency = 1, Size = UDim2.new(1, -16, 0, 18), TextXAlignment = Enum.TextXAlignment.Left })
+	local verLabel = new("TextLabel", { Parent = supportedBox, Text = "Versão: " .. tostring(executorVersion), Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Color3.fromRGB(200,200,200), BackgroundTransparency = 1, Size = UDim2.new(1, -16, 0, 18), TextXAlignment = Enum.TextXAlignment.Left })
+
+	-- Ajuste final do CanvasSize para o ScrollingFrame principal
+	delay(0.05, function()
+		local totalY = 360
+		pcall(function() scriptsFrame.CanvasSize = UDim2.new(0, 0, 0, totalY) end)
+	end)
+end
+
+-- refreshScripts agora mostra painel especial quando "Main" selecionado
+local function refreshScripts()
+	clearChildren(scriptsFrame)
+	if selectedCategory == "Main" then
+		showMainInfo()
+		return
+	end
+
+	local shown = 0
+	for _, entry in ipairs(scriptsData) do
+		if selectedCategory == "Main" or entry.category == selectedCategory then
+			local card = new("Frame", { Parent = scriptsFrame, Size = UDim2.new(1, 0, 0, 84), BackgroundColor3 = Color3.fromRGB(22, 24, 26), BorderSizePixel = 0 })
+			new("UICorner", { Parent = card, CornerRadius = UDim.new(0, 8) })
+			new("TextLabel", { Parent = card, Text = entry.name, Font = Enum.Font.GothamBold, TextSize = 16, TextColor3 = Color3.fromRGB(235, 235, 235), BackgroundTransparency = 1, Position = UDim2.new(0, 12, 0, 8) })
+			new("TextLabel", { Parent = card, Text = entry.preview or "", Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Color3.fromRGB(165, 170, 175), BackgroundTransparency = 1, Position = UDim2.new(0, 12, 0, 36), Size = UDim2.new(1, -140, 0, 36), TextWrapped = true })
+			local toggleBtn = new("TextButton", { Parent = card, Text = entry.enabled and "Desativar" or "Ativar", Font = Enum.Font.GothamBold, TextSize = 14, TextColor3 = Color3.fromRGB(245, 245, 245), BackgroundColor3 = entry.enabled and Color3.fromRGB(200, 60, 60) or Color3.fromRGB(28, 140, 230), Size = UDim2.new(0, 110, 0, 36), Position = UDim2.new(1, -126, 0, 24), BorderSizePixel = 0 })
+			new("UICorner", { Parent = toggleBtn, CornerRadius = UDim.new(0, 6) })
+			toggleBtn.MouseButton1Click:Connect(function()
+				if entry and scriptsData then
+					toggleScript(entry, toggleBtn)
+				end
+			end)
+			shown = shown + 1
+		end
+	end
+	if shown == 0 then
+		new("TextLabel", { Parent = scriptsFrame, Text = "Nenhum script nesta categoria.", Font = Enum.Font.Gotham, TextSize = 14, TextColor3 = Color3.fromRGB(160, 160, 160), BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 40), TextXAlignment = Enum.TextXAlignment.Left })
+	end
+end
+
+-- atualiza CanvasSize quando o layout muda
+local function connectCanvasUpdates()
+	catLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		catHolder.CanvasSize = UDim2.new(0, 0, 0, catLayout.AbsoluteContentSize.Y + 12)
+	end)
+	scriptsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		-- scriptsFrame.CanvasSize atualizado manualmente nas funções que desenham o conteúdo (especialmente Main)
+		scriptsFrame.CanvasSize = UDim2.new(0, 0, 0, scriptsLayout.AbsoluteContentSize.Y + 12)
+	end)
+	catHolder.CanvasSize = UDim2.new(0, 0, 0, catLayout.AbsoluteContentSize.Y + 12)
+end
+
+-- toast simples
+local function toast(text, time)
+	time = time or 3
+	local tframe = new("TextLabel", { Parent = screenGui, Text = text, Font = Enum.Font.Gotham, TextSize = 14, TextColor3 = Color3.fromRGB(240, 240, 240), BackgroundColor3 = Color3.fromRGB(28, 30, 32), Size = UDim2.new(0, 380, 0, 40), Position = UDim2.new(1, -400, 1, -80), BorderSizePixel = 0 })
+	new("UICorner", { Parent = tframe, CornerRadius = UDim.new(0, 6) })
+	delay(time, function() if tframe and tframe.Parent then tframe:Destroy() end end)
+end
+
+-- Toggle runner (usa enableFunc / disableFunc se presentes)
+function toggleScript(entry, stateBtn)
+	if entry.enabled then
+		if entry.disableFunc then
+			local ok, err = pcall(function() entry.disableFunc(entry) end)
+			if not ok then warn("Erro ao desativar script:", err) end
+		else
+			if entry.originals then
+				pcall(function()
+					if entry.originals.lighting then
+						for k, v in pairs(entry.originals.lighting) do
+							pcall(function() game:GetService("Lighting")[k] = v end)
+						end
+					end
+					if entry.originals.terrain and workspace:FindFirstChildOfClass("Terrain") then
+						local t = workspace:FindFirstChildOfClass("Terrain")
+						for k, v in pairs(entry.originals.terrain) do pcall(function() t[k] = v end) end
+					end
+					if entry.originals.instances then
+						for inst, props in pairs(entry.originals.instances) do
+							if inst and inst.Parent then
+								for k, v in pairs(props) do
+									pcall(function() inst[k] = v end)
+								end
+							end
+						end
+					end
+				end)
+			end
+		end
+		entry.enabled = false
+		if stateBtn then
+			stateBtn.Text = "Ativar"
+			stateBtn.BackgroundColor3 = Color3.fromRGB(28, 140, 230)
+		end
+		toast("Desativado: " .. tostring(entry.name), 2)
+	else
+		if entry.enableFunc then
+			local ok, err = pcall(function() entry.enableFunc(entry) end)
+			if not ok then
+				warn("Erro ao ativar script:", err)
+				toast("Erro ao ativar: " .. tostring(err), 4)
+				return
+			end
+		end
+		entry.enabled = true
+		if stateBtn then
+			stateBtn.Text = "Desativar"
+			stateBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+		end
+		toast("Ativado: " .. tostring(entry.name), 2)
+	end
+end
+
+-- ===== Remover Texturas (toggleable) =====
+local function enable_remover_texturas(entry)
+	entry.originals = { lighting = {}, terrain = {}, instances = {} }
+	local g = game
+	local w = g:GetService("Workspace")
+	local l = g:GetService("Lighting")
+	local t = w:FindFirstChildOfClass("Terrain")
+
+	pcall(function()
+		entry.originals.lighting.GlobalShadows = l.GlobalShadows
+		entry.originals.lighting.FogEnd = l.FogEnd
+		entry.originals.lighting.Brightness = l.Brightness
+	end)
+
+	if t then
+		pcall(function()
+			entry.originals.terrain = {
+				WaterWaveSize = t.WaterWaveSize,
+				WaterWaveSpeed = t.WaterWaveSpeed,
+				WaterReflectance = t.WaterReflectance,
+				WaterTransparency = t.WaterTransparency,
+			}
+		end)
+	end
+
+	for _, v in pairs(g:GetDescendants()) do
+		pcall(function()
+			if v:IsA("BasePart") or v:IsA("UnionOperation") or v:IsA("MeshPart") then
+				if not entry.originals.instances[v] then entry.originals.instances[v] = {} end
+				pcall(function() entry.originals.instances[v].Material = v.Material end)
+				pcall(function() entry.originals.instances[v].Reflectance = v.Reflectance end)
+				pcall(function() v.Material = Enum.Material.Plastic end)
+				pcall(function() v.Reflectance = 0 end)
+			elseif v:IsA("Decal") or v:IsA("Texture") then
+				if not entry.originals.instances[v] then entry.originals.instances[v] = {} end
+				pcall(function() entry.originals.instances[v].Transparency = v.Transparency end)
+				pcall(function() v.Transparency = 1 end)
+			elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+				if not entry.originals.instances[v] then entry.originals.instances[v] = {} end
+				pcall(function() entry.originals.instances[v].Enabled = v.Enabled end)
+				pcall(function() entry.originals.instances[v].Lifetime = v.Lifetime end)
+				pcall(function() v.Enabled = false end)
+				pcall(function() if v:I
