@@ -1,17 +1,11 @@
--- Davzx Fix Lag GUI (v5) - UI resized for mobile, single "Main" tab, removed texture remover, universal support
--- Ajustes:
---  - Tamanho responsivo e reduzido para mobile
---  - Removidas categorias (apenas "Main" permanece)
---  - Removido script que removia texturas (comportamento removido por completo)
---  - Botões de fechar (X) e minimizar/restaurar (-) funcionais
---  - Compatível com diferentes experiências (sem dependência de jogo específico)
 
+-- menu rework v5.3 (Mobile Friendly + Start 85%)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local Stats = game:GetService("Stats")
 
--- Espera segura por LocalPlayer
 local LocalPlayer = Players.LocalPlayer
 if not LocalPlayer then
 	LocalPlayer = Players.PlayerAdded:Wait()
@@ -33,82 +27,215 @@ local function new(class, props)
 	return obj
 end
 
--- cleanup old GUIs
-for _, name in ipairs({"DavzxFixLagGui_v2", "DavzxFixLagGui_v3", "DavzxFixLagGui_v4", "DavzxFixLagGui_v5"}) do
+-- Limpa versões antigas
+for _, name in ipairs({"DavzxFixLagGui_v2", "DavzxFixLagGui_v3", "DavzxFixLagGui_v4", "DavzxFixLagGui_v5", "DavzxFixLagGui_v5_Button"}) do
 	local ex = PlayerGui:FindFirstChild(name)
 	if ex then ex:Destroy() end
 end
 
 local screenGui = new("ScreenGui", {
-	Name = "DavzxFixLagGui_v5",
+	Name = "DavzxFixLagGui_v5_Button",
 	Parent = PlayerGui,
 	ResetOnSpawn = false,
 	ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 })
 
--- Main window (inicialmente responsivo: usa escala para mobile)
+local accentColor = Color3.fromRGB(75, 170, 255) -- azul ciano
+
+-- --- CONFIGURAÇÃO VISUAL DA JANELA ---
 local main = new("Frame", {
 	Name = "Main",
 	AnchorPoint = Vector2.new(0.5, 0.5),
+	Size = UDim2.new(0, 600, 0, 420), 
 	Position = UDim2.new(0.5, 0, 0.5, 0),
-	-- tamanho inicial em escala; será ajustado por adjustForScreen()
-	Size = UDim2.new(0.9, 0, 0.8, 0),
-	BackgroundColor3 = Color3.fromRGB(25, 27, 29),
+	BackgroundColor3 = Color3.fromRGB(8, 18, 40),
 	BorderSizePixel = 0,
 	Parent = screenGui,
 })
-new("UICorner", { Parent = main, CornerRadius = UDim.new(0, 10) })
+new("UICorner", { Parent = main, CornerRadius = UDim.new(0, 16) })
+new("UIGradient", {
+	Parent = main,
+	Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 40, 115)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(40, 110, 210)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 18, 40))
+	},
+	Rotation = 20,
+})
+new("UIStroke", { Parent = main, Color = accentColor, Transparency = 0.85, Thickness = 1 })
+
+-- --- AJUSTE DE ESCALA (85% DEFAULT) ---
+local mainScale = new("UIScale", {
+	Parent = main,
+	Scale = 0.80, -- Começa em 85%
+})
+
 main.ClipsDescendants = true
 
 -- Topbar
-local topbar = new("Frame", { Parent = main, Size = UDim2.new(1, 0, 0, 48), BackgroundTransparency = 1 })
-local title = new("TextLabel", { Parent = topbar, Text = "Davzx Fix Lag", Font = Enum.Font.GothamBold, TextSize = 18, TextColor3 = Color3.fromRGB(230, 230, 230), BackgroundTransparency = 1, Position = UDim2.new(0, 14, 0, 6), Size = UDim2.new(0, 260, 0, 28), TextXAlignment = Enum.TextXAlignment.Left })
-local subtitle = new("TextLabel", { Parent = topbar, Text = "Gerenciador de scripts", Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Color3.fromRGB(160, 165, 170), BackgroundTransparency = 1, Position = UDim2.new(0, 14, 0, 28), Size = UDim2.new(0, 260, 0, 18), TextXAlignment = Enum.TextXAlignment.Left })
+local topbar = new("Frame", { Parent = main, Size = UDim2.new(1, 0, 0, 45), BackgroundTransparency = 0.9 })
+local title = new("TextLabel", {
+	Parent = topbar,
+	Text = "DavzxFixLag Hub",
+	Font = Enum.Font.GothamBold,
+	TextSize = 18,
+	TextColor3 = Color3.fromRGB(245, 245, 245),
+	BackgroundTransparency = 1,
+	Position = UDim2.new(0, 18, 0, 0),
+	Size = UDim2.new(0, 320, 1, 0),
+	TextXAlignment = Enum.TextXAlignment.Left
+})
 
--- Close (X) button - sempre visível
+local btnBgColor = Color3.fromRGB(20, 26, 38)
+local btnTextColor = Color3.fromRGB(235, 240, 250)
+
+local function styleButton(btn)
+	new("UICorner", { Parent = btn, CornerRadius = UDim.new(0, 8) })
+	new("UIStroke", { Parent = btn, Color = accentColor, Transparency = 0.9, Thickness = 1 })
+end
+
+-- --- BOTÕES DA TOPBAR ---
+
+-- Fechar (X)
 local btnClose = new("TextButton", {
 	Parent = topbar,
 	Name = "Close",
 	Text = "X",
 	Font = Enum.Font.GothamBold,
-	TextSize = 16,
-	TextColor3 = Color3.fromRGB(220, 220, 220),
-	BackgroundColor3 = Color3.fromRGB(40, 42, 44),
+	TextSize = 14,
+	TextColor3 = btnTextColor,
+	BackgroundTransparency = 0.85,
+	BackgroundColor3 = btnBgColor,
 	Size = UDim2.new(0, 36, 0, 28),
-	Position = UDim2.new(1, -46, 0, 10),
+	Position = UDim2.new(1, -44, 0, 8),
 	AutoButtonColor = true,
 	BorderSizePixel = 0,
 })
-new("UICorner", { Parent = btnClose, CornerRadius = UDim.new(0, 6) })
+styleButton(btnClose)
 
--- Minimize/Restore button - sempre visível
+-- Minimizar (-)
 local btnMin = new("TextButton", {
 	Parent = topbar,
 	Name = "Min",
 	Text = "—",
 	Font = Enum.Font.GothamBold,
-	TextSize = 20,
-	TextColor3 = Color3.fromRGB(220, 220, 220),
-	BackgroundColor3 = Color3.fromRGB(40, 42, 44),
+	TextSize = 14,
+	TextColor3 = btnTextColor,
+	BackgroundTransparency = 0.85,
+	BackgroundColor3 = btnBgColor,
 	Size = UDim2.new(0, 36, 0, 28),
-	Position = UDim2.new(1, -92, 0, 10),
+	Position = UDim2.new(1, -88, 0, 8),
 	AutoButtonColor = true,
 	BorderSizePixel = 0
 })
-new("UICorner", { Parent = btnMin, CornerRadius = UDim.new(0, 6) })
+styleButton(btnMin)
 
--- Content (ocupando a maior parte do painel; removida a sidebar/categorias)
-local content = new("Frame", { Parent = main, Name = "Content", Size = UDim2.new(1, -24, 1, -72), Position = UDim2.new(0, 12, 0, 56), BackgroundColor3 = Color3.fromRGB(14, 16, 18), BorderSizePixel = 0 })
-new("UICorner", { Parent = content, CornerRadius = UDim.new(0, 8) })
-local contentHeader = new("Frame", { Parent = content, Size = UDim2.new(1, 0, 0, 56), BackgroundTransparency = 1 })
-local currentCatLabel = new("TextLabel", { Parent = contentHeader, Text = "Main", Font = Enum.Font.GothamBold, TextSize = 16, TextColor3 = Color3.fromRGB(230, 230, 230), BackgroundTransparency = 1, Position = UDim2.new(0, 12, 0, 12), Size = UDim2.new(0.6, 0, 0, 28), TextXAlignment = Enum.TextXAlignment.Left })
+-- Resize (%)
+local btnResize = new("TextButton", {
+	Parent = topbar,
+	Name = "Resize",
+	Text = "85%", -- Texto inicial ajustado
+	Font = Enum.Font.GothamBold,
+	TextSize = 12,
+	TextColor3 = btnTextColor,
+	BackgroundTransparency = 0.85,
+	BackgroundColor3 = btnBgColor,
+	Size = UDim2.new(0, 48, 0, 28),
+	Position = UDim2.new(1, -144, 0, 8),
+	AutoButtonColor = true,
+	BorderSizePixel = 0
+})
+styleButton(btnResize)
 
--- Scripts list / main content holder
-local scriptsFrame = new("ScrollingFrame", { Parent = content, Name = "ScriptsList", BackgroundTransparency = 1, Size = UDim2.new(1, -24, 1, -80), Position = UDim2.new(0, 12, 0, 68), ScrollBarThickness = 8, CanvasSize = UDim2.new(0,0,0,0) })
-local scriptsLayout = new("UIListLayout", { Parent = scriptsFrame, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 10) })
-scriptsLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+-- Lógica do Resize (Inicia no Estado 2 = 85%)
+local currentSizeState = 2 
+btnResize.MouseButton1Click:Connect(function()
+	currentSizeState = currentSizeState + 1
+	if currentSizeState > 3 then currentSizeState = 1 end
 
--- helpers
+	if currentSizeState == 1 then
+		mainScale.Scale = 1.0
+		btnResize.Text = "100%"
+	elseif currentSizeState == 2 then
+		mainScale.Scale = 0.85
+		btnResize.Text = "85%"
+	elseif currentSizeState == 3 then
+		mainScale.Scale = 0.60
+		btnResize.Text = "60%"
+	end
+end)
+
+-- Sidebar (Esquerda)
+local sidebar = new("Frame", {
+	Parent = main,
+	Name = "Sidebar",
+	Size = UDim2.new(0, 130, 1, -60),
+	Position = UDim2.new(0, 14, 0, 48),
+	BackgroundColor3 = Color3.fromRGB(6, 12, 35),
+	BorderSizePixel = 0
+})
+new("UICorner", { Parent = sidebar, CornerRadius = UDim.new(0, 12) })
+new("UIStroke", { Parent = sidebar, Color = Color3.fromRGB(40,95,200), Transparency = 0.9, Thickness = 1 })
+
+local sidebarLayout = new("UIListLayout", {
+	Parent = sidebar,
+	SortOrder = Enum.SortOrder.LayoutOrder,
+	Padding = UDim.new(0, 8),
+	HorizontalAlignment = Enum.HorizontalAlignment.Center,
+	VerticalAlignment = Enum.VerticalAlignment.Top
+})
+new("UIPadding", { Parent = sidebar, PaddingTop = UDim.new(0, 12) })
+
+-- Content Area (Direita)
+local content = new("Frame", {
+	Parent = main,
+	Name = "Content",
+	Size = UDim2.new(1, -158, 1, -60),
+	Position = UDim2.new(0, 154, 0, 48),
+	BackgroundColor3 = Color3.fromRGB(6, 12, 35),
+	BorderSizePixel = 0
+})
+new("UICorner", { Parent = content, CornerRadius = UDim.new(0, 12) })
+new("UIGradient", {
+	Parent = content,
+	Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(6, 18, 60)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 40, 100))
+	},
+	Rotation = -15
+})
+new("UIStroke", { Parent = content, Color = Color3.fromRGB(40,95,200), Transparency = 0.9, Thickness = 1 })
+
+local contentHeader = new("Frame", { Parent = content, Size = UDim2.new(1, 0, 0, 36), BackgroundTransparency = 1 })
+local currentCatLabel = new("TextLabel", {
+	Parent = contentHeader,
+	Text = "Main",
+	Font = Enum.Font.GothamBold,
+	TextSize = 16,
+	TextColor3 = Color3.fromRGB(240, 245, 250),
+	BackgroundTransparency = 1,
+	Position = UDim2.new(0, 12, 0, 0),
+	Size = UDim2.new(0.6, 0, 1, 0),
+	TextXAlignment = Enum.TextXAlignment.Left
+})
+
+local scriptsFrame = new("ScrollingFrame", {
+	Parent = content,
+	Name = "ScriptsList",
+	BackgroundTransparency = 1,
+	Size = UDim2.new(1, -12, 1, -40),
+	Position = UDim2.new(0, 6, 0, 36),
+	ScrollBarThickness = 4,
+	CanvasSize = UDim2.new(0,0,0,0),
+	BorderSizePixel = 0
+})
+local scriptsLayout = new("UIListLayout", { Parent = scriptsFrame, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 8) })
+
+-- Variáveis Globais
+local serverBoxFixed = nil
+local serverInfoUpdater = nil
+local activeTab = ""
+
 local function clearChildren(parent)
 	for _, c in ipairs(parent:GetChildren()) do
 		if not (c:IsA("UIListLayout") or c:IsA("UIPadding") or c:IsA("UIScale") or c:IsA("UIGridLayout")) then
@@ -117,297 +244,314 @@ local function clearChildren(parent)
 	end
 end
 
--- detect executor (heurística simples)
-local function detectExecutor()
-	local ok, res = pcall(function()
-		if type(identifyexecutor) == "function" then
-			return identifyexecutor()
-		end
-	end)
-	if ok and type(res) == "string" and res ~= "" then
-		return res
+local function resetContent()
+	if serverInfoUpdater and typeof(serverInfoUpdater) == "RBXScriptConnection" then
+		pcall(function() serverInfoUpdater:Disconnect() end)
+		serverInfoUpdater = nil
 	end
-
-	if type(syn) == "table" or type(syn) == "userdata" then
-		local ver = "Synapse X"
-		if syn and type(syn) == "table" and syn.version then
-			ver = ver .. " " .. tostring(syn.version)
-		end
-		return ver
+	if serverBoxFixed and serverBoxFixed.Parent then
+		pcall(function() serverBoxFixed:Destroy() end)
+		serverBoxFixed = nil
 	end
-	if rawget(_G, "KRNL_LOADED") or rawget(_G, "KRNL") then
-		return "KRNL"
-	end
-	if rawget(_G, "is_sirhurt_closure") then
-		return "SirHurt"
-	end
-	if rawget(_G, "secure_load") then
-		return "SecureLoad"
-	end
-	if rawget(_G, "protosmasher") or rawget(_G, "PROTOSMASHER_LOADED") then
-		return "ProtoSmasher"
-	end
-	if type(getexecutor) == "function" then
-		local ok2, name = pcall(getexecutor)
-		if ok2 and type(name) == "string" and name ~= "" then
-			return name
-		end
-		return "Unknown (getexecutor)"
-	end
-	return "Unknown"
-end
-
-local function detectExecutorVersion()
-	local ok, res = pcall(function()
-		if type(identifyexecutor) == "function" then
-			return identifyexecutor()
-		end
-	end)
-	if ok and type(res) == "string" and res ~= "" then
-		return res
-	end
-	if syn and type(syn) == "table" and syn.version then
-		return tostring(syn.version)
-	end
-	return "Unknown"
-end
-
--- Função para criar o painel "Main" com avatar e supported info (mantido como pedido)
-local function showMainInfo()
 	clearChildren(scriptsFrame)
+	scriptsFrame.CanvasPosition = Vector2.new(0,0)
+end
 
-	-- Container para layout (dois painéis)
-	local container = new("Frame", { Parent = scriptsFrame, Size = UDim2.new(1, 0, 0, 360), BackgroundTransparency = 1 })
-	new("UICorner", { Parent = container, CornerRadius = UDim.new(0, 6) })
+-- --- FUNÇÕES DE DADOS (Friends, FPS) ---
+local sessionJoinTime = tick()
+local avgDt = 1/60
+local fpsSmoothed = 60
 
-	-- Left column
-	local left = new("Frame", { Parent = container, Size = UDim2.new(0.62, 0, 1, 0), Position = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1 })
-	new("TextLabel", { Parent = left, Text = "Info Main", Font = Enum.Font.GothamBold, TextSize = 14, TextColor3 = Color3.fromRGB(210,210,210), BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0, 0), Size = UDim2.new(1, 0, 0, 24), TextXAlignment = Enum.TextXAlignment.Left })
+local function formatTimeSeconds(s)
+	s = math.max(0, math.floor(s))
+	local h = math.floor(s / 3600)
+	local m = math.floor((s % 3600) / 60)
+	local sec = s % 60
+	if h > 0 then return string.format("%dh %02dm", h, m) else return string.format("%02dm %02ds", m, sec) end
+end
 
-	-- Avatar frame
-	local avatarFrame = new("Frame", { Parent = left, Position = UDim2.new(0, 0, 0, 28), Size = UDim2.new(1, 0, 0, 160), BackgroundColor3 = Color3.fromRGB(23,25,27), BorderSizePixel = 0 })
-	new("UICorner", { Parent = avatarFrame, CornerRadius = UDim.new(0,6) })
+local function countFriendsInServer()
+	local count = 0
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer then
+			local s, isFriend = pcall(function() return LocalPlayer:IsFriendsWith(p.UserId) end)
+			if s and isFriend then
+				count = count + 1
+			end
+		end
+	end
+	return count
+end
 
+-- --- ABA MAIN ---
+local function showMainTab()
+	if activeTab == "Main" then return end
+	activeTab = "Main"
+	currentCatLabel.Text = "Main Info"
+	resetContent()
+
+	scriptsFrame.Size = UDim2.new(0.55, -8, 1, -40)
+
+	-- Esquerda: Avatar e Créditos
+	local containerLeft = new("Frame", { Parent = scriptsFrame, Size = UDim2.new(1, 0, 0, 280), BackgroundTransparency = 1 })
+	
+	local avatarFrame = new("Frame", { Parent = containerLeft, Position = UDim2.new(0, 0, 0, 0), Size = UDim2.new(1, 0, 0, 110), BackgroundColor3 = Color3.fromRGB(23,25,27), BorderSizePixel = 0 })
+	new("UICorner", { Parent = avatarFrame, CornerRadius = UDim.new(0,8) })
+	
 	local avatarImg = new("ImageLabel", {
 		Parent = avatarFrame,
-		Size = UDim2.new(0, 120, 0, 120),
-		Position = UDim2.new(0.02, 0, 0.1, 0),
+		Size = UDim2.new(0, 80, 0, 80),
+		Position = UDim2.new(0, 10, 0.5, -40),
 		BackgroundTransparency = 1,
 		Image = "",
 		ScaleType = Enum.ScaleType.Fit,
 	})
-	do
-		local ok, url = pcall(function()
-			return Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
-		end)
-		if ok and type(url) == "string" and url ~= "" then
-			avatarImg.Image = url
-		else
-			avatarImg.BackgroundColor3 = Color3.fromRGB(40,40,40)
-		end
+	new("UICorner", { Parent = avatarImg, CornerRadius = UDim.new(1,0) })
+	task.spawn(function()
+		local ok, url = pcall(function() return Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150) end)
+		if ok and url then avatarImg.Image = url end
+	end)
+	
+	local userLabel = new("TextLabel", {
+		Parent = avatarFrame,
+		Text = LocalPlayer.DisplayName,
+		Font = Enum.Font.GothamBold,
+		TextSize = 14,
+		TextColor3 = Color3.fromRGB(255,255,255),
+		BackgroundTransparency = 1,
+		Position = UDim2.new(0, 100, 0.3, 0),
+		Size = UDim2.new(0, 100, 0, 20),
+		TextXAlignment = Enum.TextXAlignment.Left
+	})
+	new("TextLabel", {
+		Parent = avatarFrame,
+		Text = "@" .. LocalPlayer.Name,
+		Font = Enum.Font.Gotham,
+		TextSize = 12,
+		TextColor3 = Color3.fromRGB(180,180,180),
+		BackgroundTransparency = 1,
+		Position = UDim2.new(0, 100, 0.3, 20),
+		Size = UDim2.new(0, 100, 0, 16),
+		TextXAlignment = Enum.TextXAlignment.Left
+	})
+
+	local sectionsContainer = new("Frame", { Parent = containerLeft, Position = UDim2.new(0, 0, 0, 120), Size = UDim2.new(1, 0, 0, 150), BackgroundTransparency = 1 })
+	local secLayout = new("UIListLayout", { Parent = sectionsContainer, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 4) })
+	
+	local function makeText(p, t, c)
+		new("TextLabel", { Parent = p, Text = t, Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = c or Color3.fromRGB(200,200,200), BackgroundTransparency = 1, Size = UDim2.new(1,0,0,20), TextXAlignment=Enum.TextXAlignment.Left, TextWrapped=true })
+	end
+	
+	new("TextLabel", { Parent = sectionsContainer, Text = "Credits", Font = Enum.Font.GothamBold, TextSize = 13, TextColor3 = accentColor, BackgroundTransparency = 1, Size = UDim2.new(1,0,0,20), TextXAlignment=Enum.TextXAlignment.Left })
+	makeText(sectionsContainer, "Criado Por Davzx & Equipe", Color3.fromRGB(220,220,220))
+	new("Frame", { Parent = sectionsContainer, Size = UDim2.new(1,0,0,8), BackgroundTransparency=1 }) -- Spacer
+	new("TextLabel", { Parent = sectionsContainer, Text = "Info", Font = Enum.Font.GothamBold, TextSize = 13, TextColor3 = accentColor, BackgroundTransparency = 1, Size = UDim2.new(1,0,0,20), TextXAlignment=Enum.TextXAlignment.Left })
+	makeText(sectionsContainer, "Versão: 5.3 (Mobile)", Color3.fromRGB(180,180,180))
+
+	scriptsFrame.CanvasSize = UDim2.new(0, 0, 0, 300)
+
+	-- Direita: Server Info (FIXO)
+	serverBoxFixed = new("Frame", {
+		Parent = content,
+		Name = "ServerBoxFixed",
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -8, 0, 36),
+		Size = UDim2.new(0.42, 0, 0.85, 0),
+		BackgroundColor3 = Color3.fromRGB(10, 20, 45),
+		BorderSizePixel = 0,
+	})
+	new("UICorner", { Parent = serverBoxFixed, CornerRadius = UDim.new(0, 10) })
+	new("UIStroke", { Parent = serverBoxFixed, Color = Color3.fromRGB(40,95,200), Transparency = 0.8, Thickness = 1 })
+
+	local infoBox = new("Frame", { Parent = serverBoxFixed, Position = UDim2.new(0, 10, 0, 10), Size = UDim2.new(1, -20, 1, -20), BackgroundTransparency = 1 })
+	local layoutInfo = new("UIListLayout", { Parent = infoBox, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6) })
+
+	local function makeInfoLine(icon, txt)
+		local f = new("Frame", { Parent = infoBox, Size = UDim2.new(1,0,0,30), BackgroundTransparency = 1 })
+		new("TextLabel", { Parent = f, Text = icon, Font = Enum.Font.GothamBold, TextSize = 14, TextColor3 = accentColor, BackgroundTransparency = 1, Size = UDim2.new(0,20,1,0), Position = UDim2.new(0,0,0,0) })
+		return new("TextLabel", { Parent = f, Text = txt, Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Color3.fromRGB(220,220,220), BackgroundTransparency = 1, Size = UDim2.new(1,-24,1,0), Position = UDim2.new(0,24,0,0), TextXAlignment = Enum.TextXAlignment.Left })
 	end
 
-	-- Container de seções (Main Credits, Version, Support)
-	local sectionsContainer = new("Frame", { Parent = left, Position = UDim2.new(0, 0, 0, 200), Size = UDim2.new(1, 0, 0, 152), BackgroundTransparency = 1 })
-	local secLayout = new("UIListLayout", { Parent = sectionsContainer, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 8) })
+	local friendsLine = makeInfoLine("👥", "Friends: Checking...")
+	local pingLine = makeInfoLine("📶", "Ping: ...")
+	local fpsLine = makeInfoLine("💻", "FPS: ...")
+	local timeLine = makeInfoLine("🕒", "Time: 00m")
 
-	local function makeSection(parent, titleText, titleColor)
-		local section = new("Frame", { Parent = parent, Size = UDim2.new(1, 0, 0, 64), BackgroundTransparency = 1 })
-		new("TextLabel", { Parent = section, Text = titleText, Font = Enum.Font.GothamBold, TextSize = 13, TextColor3 = titleColor or Color3.fromRGB(200,200,200), BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0, 6), Size = UDim2.new(1, 0, 0, 18), TextXAlignment = Enum.TextXAlignment.Left })
-		local content = new("TextLabel", { Parent = section, Text = "", Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Color3.fromRGB(175,175,175), BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0, 28), Size = UDim2.new(1, 0, 0, 30), TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left })
-		return section, content
-	end
+	local uiAccumulator = 0
+	local friendCheckTimer = 5
+	
+	serverInfoUpdater = RunService.Heartbeat:Connect(function(dt)
+		local alpha = 0.1
+		avgDt = avgDt + (dt - avgDt) * alpha
+		fpsSmoothed = 1 / math.max(0.0001, avgDt)
 
-	local _, creditsContent = makeSection(sectionsContainer, "Main Credits", Color3.fromRGB(220, 40, 80))
-	creditsContent.Text = "Script Criado Por Davzx & Sua Equipe."
+		uiAccumulator = uiAccumulator + dt
+		friendCheckTimer = friendCheckTimer + dt
 
-	local _, versionContent = makeSection(sectionsContainer, "Version", Color3.fromRGB(60,120,220))
-	versionContent.Text = "Versão V1, Versão beta, em breve novos updates."
-
-	local _, supportContent = makeSection(sectionsContainer, "Support", Color3.fromRGB(160,160,160))
-	supportContent.Text = "" -- vazio por enquanto
-
-	-- Right column (Supported)
-	local right = new("Frame", { Parent = container, Size = UDim2.new(0.36, 0, 1, 0), Position = UDim2.new(0.64, 12, 0, 0), BackgroundTransparency = 1 })
-	new("TextLabel", { Parent = right, Text = "Supported", Font = Enum.Font.GothamBold, TextSize = 14, TextColor3 = Color3.fromRGB(210,210,210), BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0, 0), Size = UDim2.new(1, 0, 0, 24), TextXAlignment = Enum.TextXAlignment.Left })
-
-	local supportedBox = new("Frame", { Parent = right, Position = UDim2.new(0, 0, 0, 28), Size = UDim2.new(1, 0, 0, 300), BackgroundColor3 = Color3.fromRGB(23,25,27), BorderSizePixel = 0 })
-	new("UICorner", { Parent = supportedBox, CornerRadius = UDim.new(0,6) })
-	new("UIPadding", { Parent = supportedBox, PaddingLeft = UDim.new(0,8), PaddingTop = UDim.new(0,8) })
-	local supLayout = new("UIListLayout", { Parent = supportedBox, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0,6) })
-
-	-- Preencher informações de Supported: executor e possível versão
-	local executorName = detectExecutor()
-	local executorVersion = detectExecutorVersion()
-
-	new("TextLabel", { Parent = supportedBox, Text = "Executor Info:", Font = Enum.Font.GothamBold, TextSize = 13, TextColor3 = Color3.fromRGB(235,105,155), BackgroundTransparency = 1, Size = UDim2.new(1, -16, 0, 18), TextXAlignment = Enum.TextXAlignment.Left })
-	new("TextLabel", { Parent = supportedBox, Text = "Executor: " .. tostring(executorName), Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Color3.fromRGB(200,200,200), BackgroundTransparency = 1, Size = UDim2.new(1, -16, 0, 18), TextXAlignment = Enum.TextXAlignment.Left })
-
-	new("TextLabel", { Parent = supportedBox, Text = "Client Version:", Font = Enum.Font.GothamBold, TextSize = 13, TextColor3 = Color3.fromRGB(200,160,50), BackgroundTransparency = 1, Size = UDim2.new(1, -16, 0, 18), TextXAlignment = Enum.TextXAlignment.Left })
-	new("TextLabel", { Parent = supportedBox, Text = "Versão: " .. tostring(executorVersion), Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Color3.fromRGB(200,200,200), BackgroundTransparency = 1, Size = UDim2.new(1, -16, 0, 18), TextXAlignment = Enum.TextXAlignment.Left })
-
-	-- Ajuste final do CanvasSize para o ScrollingFrame principal
-	delay(0.05, function()
-		local totalY = 360
-		pcall(function() scriptsFrame.CanvasSize = UDim2.new(0, 0, 0, totalY) end)
-	end)
-end
-
--- refreshScripts agora sempre mostra apenas o painel Main
-local function refreshScripts()
-	clearChildren(scriptsFrame)
-	showMainInfo()
-end
-
--- canvas updates (apenas para scriptsFrame)
-local function connectCanvasUpdates()
-	scriptsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		scriptsFrame.CanvasSize = UDim2.new(0, 0, 0, scriptsLayout.AbsoluteContentSize.Y + 12)
-	end)
-	scriptsFrame.CanvasSize = UDim2.new(0, 0, 0, scriptsLayout.AbsoluteContentSize.Y + 12)
-end
-
--- toast simples
-local function toast(text, time)
-	time = time or 3
-	local tframe = new("TextLabel", { Parent = screenGui, Text = text, Font = Enum.Font.Gotham, TextSize = 14, TextColor3 = Color3.fromRGB(240, 240, 240), BackgroundColor3 = Color3.fromRGB(28, 30, 32), Size = UDim2.new(0, 380, 0, 40), Position = UDim2.new(1, -400, 1, -80), BorderSizePixel = 0 })
-	new("UICorner", { Parent = tframe, CornerRadius = UDim.new(0, 6) })
-	delay(time, function() if tframe and tframe.Parent then tframe:Destroy() end end)
-end
-
--- Toggle runner (mantido para compatibilidade futura; não usado nesta versão)
-function toggleScript(entry, stateBtn)
-	if entry.enabled then
-		if entry.disableFunc then
-			local ok, err = pcall(function() entry.disableFunc(entry) end)
-			if not ok then warn("Erro ao desativar script:", err) end
-		end
-		entry.enabled = false
-		if stateBtn then
-			stateBtn.Text = "Ativar"
-			stateBtn.BackgroundColor3 = Color3.fromRGB(28, 140, 230)
-		end
-		toast("Desativado: " .. tostring(entry.name), 2)
-	else
-		if entry.enableFunc then
-			local ok, err = pcall(function() entry.enableFunc(entry) end)
-			if not ok then
-				warn("Erro ao ativar script:", err)
-				toast("Erro ao ativar: " .. tostring(err), 4)
-				return
+		if uiAccumulator >= 0.5 then
+			fpsLine.Text = string.format("FPS: %d", math.floor(fpsSmoothed + 0.5))
+			
+			local pingVal = 0
+			if LocalPlayer.GetNetworkPing then
+				pingVal = math.floor(LocalPlayer:GetNetworkPing() * 1000)
 			end
+			pingLine.Text = string.format("Ping: %d ms", pingVal)
+
+			timeLine.Text = formatTimeSeconds(tick() - sessionJoinTime)
+
+			if friendCheckTimer >= 5 then
+				friendCheckTimer = 0
+				task.spawn(function()
+					local fCount = countFriendsInServer()
+					friendsLine.Text = "Friends: " .. tostring(fCount)
+				end)
+			end
+			
+			uiAccumulator = 0
 		end
-		entry.enabled = true
-		if stateBtn then
-			stateBtn.Text = "Desativar"
-			stateBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
-		end
-		toast("Ativado: " .. tostring(entry.name), 2)
-	end
+	end)
 end
 
--- Build UI & connect logic (apenas Main)
-connectCanvasUpdates()
-refreshScripts()
+-- --- OUTRAS CATEGORIAS ---
+local function showUniversalTab()
+	if activeTab == "Universal" then return end
+	activeTab = "Universal"
+	currentCatLabel.Text = "Universal Scripts"
+	resetContent()
+	scriptsFrame.Size = UDim2.new(1, -12, 1, -40)
 
--- Minimize logic (compact bar)
+	new("TextLabel", { Parent = scriptsFrame, Text = "Universal (Vazio)", TextColor3 = Color3.fromRGB(100,100,100), Font = Enum.Font.Gotham, TextSize = 14, Size = UDim2.new(1,0,0,30), BackgroundTransparency=1 })
+end
+
+local function showBloxFruitsTab()
+	if activeTab == "BloxFruits" then return end
+	activeTab = "BloxFruits"
+	currentCatLabel.Text = "Blox Fruits Scripts"
+	resetContent()
+	scriptsFrame.Size = UDim2.new(1, -12, 1, -40)
+
+	new("TextLabel", { Parent = scriptsFrame, Text = "Blox Fruits (Vazio)", TextColor3 = Color3.fromRGB(100,100,100), Font = Enum.Font.Gotham, TextSize = 14, Size = UDim2.new(1,0,0,30), BackgroundTransparency=1 })
+end
+
+-- --- SIDEBAR BUTTONS ---
+local sidebarButtons = {}
+local activeBtnColor = Color3.fromRGB(40, 110, 210)
+local inactiveBtnColor = Color3.fromRGB(20, 26, 38)
+
+local function createSidebarButton(text, callback)
+	local btn = new("TextButton", {
+		Parent = sidebar,
+		Text = text,
+		Font = Enum.Font.GothamBold,
+		TextSize = 13,
+		TextColor3 = Color3.fromRGB(235, 240, 250),
+		BackgroundColor3 = inactiveBtnColor,
+		Size = UDim2.new(0, 110, 0, 32),
+		AutoButtonColor = true,
+		BorderSizePixel = 0
+	})
+	new("UICorner", { Parent = btn, CornerRadius = UDim.new(0, 6) })
+	
+	btn.MouseButton1Click:Connect(function()
+		for _, b in ipairs(sidebarButtons) do
+			TweenService:Create(b, TweenInfo.new(0.2), {BackgroundColor3 = inactiveBtnColor}):Play()
+		end
+		TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = activeBtnColor}):Play()
+		if callback then callback() end
+	end)
+	
+	table.insert(sidebarButtons, btn)
+	return btn
+end
+
+local btnMain = createSidebarButton("Main", showMainTab)
+createSidebarButton("Universal", showUniversalTab)
+createSidebarButton("Blox Fruits", showBloxFruitsTab)
+
+task.delay(0.1, function()
+	showMainTab()
+	btnMain.BackgroundColor3 = activeBtnColor
+end)
+
+-- --- LÓGICA DE ARRASTAR (DRAG) UNIVERSAL ---
+local function enableDrag(frame, dragHandle)
+	local dragging, dragInput, dragStart, startPos
+	local function update(input)
+		local delta = input.Position - dragStart
+		frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+	dragHandle.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = frame.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then dragging = false end
+			end)
+		end
+	end)
+	dragHandle.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			dragInput = input
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then update(input) end
+	end)
+end
+
+enableDrag(main, topbar)
+
+-- --- SISTEMA MOBILE / MINIMIZAR ---
 local minimized = false
-local collapsedBar
+local mobileBtn
+
+-- Função para criar o botão mobile flutuante e arrastável
+local function spawnMobileButton()
+	if mobileBtn then return end
+	mobileBtn = new("TextButton", {
+		Parent = screenGui,
+		Name = "MobileToggle",
+		Text = "D",
+		Font = Enum.Font.GothamBold,
+		TextSize = 22,
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		BackgroundColor3 = Color3.fromRGB(30, 35, 50),
+		Size = UDim2.new(0, 50, 0, 50),
+		Position = UDim2.new(0.1, 0, 0.2, 0), -- Posição inicial no canto
+		AutoButtonColor = true,
+		ZIndex = 100
+	})
+	new("UICorner", { Parent = mobileBtn, CornerRadius = UDim.new(1, 0) }) -- Redondo
+	new("UIStroke", { Parent = mobileBtn, Color = accentColor, Thickness = 2 })
+	
+	-- Arrastável
+	enableDrag(mobileBtn, mobileBtn)
+
+	-- Clique (Toggle)
+	local isDraggingBtn = false
+	mobileBtn.InputBegan:Connect(function() isDraggingBtn = false end)
+	mobileBtn.InputChanged:Connect(function() isDraggingBtn = true end)
+	
+	mobileBtn.MouseButton1Up:Connect(function()
+		-- Pequeno delay para distinguir clique de arrasto
+		if not isDraggingBtn then
+			minimized = false
+			mobileBtn:Destroy()
+			mobileBtn = nil
+			main.Visible = true
+		end
+	end)
+end
+
 btnMin.MouseButton1Click:Connect(function()
 	minimized = not minimized
 	if minimized then
-		-- esconder a janela principal e criar uma barra compacta
 		main.Visible = false
-		if not collapsedBar or not collapsedBar.Parent then
-			collapsedBar = new("Frame", { Parent = screenGui, Size = UDim2.new(0, 160, 0, 48), Position = UDim2.new(0, 20, 0, 20), BackgroundColor3 = Color3.fromRGB(25, 27, 29), ZIndex = 40 })
-			new("UICorner", { Parent = collapsedBar, CornerRadius = UDim.new(0, 8) })
-			local openBtn = new("TextButton", { Parent = collapsedBar, Text = "Davzx", Font = Enum.Font.GothamBold, TextSize = 16, TextColor3 = Color3.fromRGB(235, 235, 235), BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0) })
-			openBtn.MouseButton1Click:Connect(function()
-				minimized = false
-				if collapsedBar and collapsedBar.Parent then collapsedBar:Destroy() end
-				main.Visible = true
-			end)
-
-			-- allow dragging the collapsed bar (supports mouse and touch)
-			local draggingCollapsed = false
-			local startPosCollapsed, startBarPos
-			openBtn.InputBegan:Connect(function(input)
-				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-					draggingCollapsed = true
-					startPosCollapsed = input.Position
-					startBarPos = collapsedBar.Position
-					input.Changed:Connect(function()
-						if input.UserInputState == Enum.UserInputState.End then draggingCollapsed = false end
-					end)
-				end
-			end)
-			RunService.RenderStepped:Connect(function()
-				if draggingCollapsed and startPosCollapsed and startBarPos and collapsedBar and collapsedBar.Parent then
-					local cur = UserInputService:GetMouseLocation()
-					local delta = cur - startPosCollapsed
-					collapsedBar.Position = UDim2.new(startBarPos.X.Scale, startBarPos.X.Offset + delta.X, startBarPos.Y.Scale, startBarPos.Y.Offset + delta.Y)
-				end
-			end)
-		end
-	else
-		if collapsedBar and collapsedBar.Parent then collapsedBar:Destroy() end
-		main.Visible = true
+		spawnMobileButton()
 	end
 end)
 
--- Close behavior: destrói a GUI completamente
 btnClose.MouseButton1Click:Connect(function()
-	if screenGui and screenGui.Parent then
-		screenGui:Destroy()
-	end
+	if screenGui then screenGui:Destroy() end
 end)
-
--- Draggable window (topbar) - suporta mouse e touch
-local draggingWindow = false
-local dragStartPos, windowStartPos
-
-topbar.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		draggingWindow = true
-		dragStartPos = input.Position
-		windowStartPos = main.Position
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				draggingWindow = false
-			end
-		end)
-	end
-end)
-
-RunService.RenderStepped:Connect(function()
-	if draggingWindow and dragStartPos and windowStartPos then
-		local cur = UserInputService:GetMouseLocation()
-		local delta = cur - dragStartPos
-		main.Position = UDim2.new(windowStartPos.X.Scale, windowStartPos.X.Offset + delta.X, windowStartPos.Y.Scale, windowStartPos.Y.Offset + delta.Y)
-	end
-end)
-
--- Responsiveness: ajustar tamanho de acordo com viewport (mobile friendly)
-local function adjustForScreen()
-	local viewportX, viewportY = 1280, 720
-	if workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize then
-		viewportX = workspace.CurrentCamera.ViewportSize.X
-		viewportY = workspace.CurrentCamera.ViewportSize.Y
-	end
-
-	-- Telas muito pequenas => quase full-screen mas com margens
-	if viewportX <= 700 then
-		main.Size = UDim2.new(0.95, 0, 0.92, 0)
-		main.Position = UDim2.new(0.5, 0, 0.5, 0)
-	else
-		-- Desktop/tablet: limitar largura e altura máximas para não ocupar inteira
-		local w = math.clamp(math.floor(viewportX * 0.7), 560, 1000)
-		local h = math.clamp(math.floor(viewportY * 0.7), 380, 760)
-		main.Size = UDim2.new(0, w, 0, h)
-		main.Position = UDim2.new(0.5, 0, 0.5, 0)
-	end
-end
-workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(adjustForScreen)
-adjustForScreen()
-
-delay(0.5, function() toast("UI carregada — aba Main ativa", 3) end)
