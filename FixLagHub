@@ -7,13 +7,25 @@ local StarterGui = game:GetService("StarterGui")
 local HttpService = game:GetService("HttpService")
 local Lighting = game:GetService("Lighting")
 
+-- ====================================================
+-- [[ CONFIGURAÇÕES GERAIS ]]
+-- ====================================================
+
+-- 1. CONFIGURAÇÃO DA KEY
 local KeySettings = {
-    LinkGetKey = "https://4br.me/pyLjc",
+    LinkGetKey = "https://4br.me/pyLjc", -- SEU LINK
     FileName = "DavzxHub_Key_Save.txt",
     NameHub = "Davzx Hub"
 }
 
--- Cores do Tema (Estilo HoHo - Preto e Vermelho)
+-- 2. LISTA DE PESSOAS QUE NÃO PRECISAM DE KEY (VIP/PREMIUM)
+local PremiumList = {
+    "Ntgui_ttk",  -- Você
+    "tchook", -- Exemplo (pode adicionar mais separando por vírgula)
+    "OutraPessoa"
+}
+
+-- 3. CORES DO TEMA (HO HO STYLE)
 local Theme = {
     Background = Color3.fromRGB(25, 25, 25),
     DarkerBG = Color3.fromRGB(18, 18, 18),
@@ -21,6 +33,10 @@ local Theme = {
     TextWhite = Color3.fromRGB(255, 255, 255),
     TextGray = Color3.fromRGB(150, 150, 150)
 }
+
+-- ====================================================
+
+local LocalPlayer = Players.LocalPlayer
 
 -- [[ 1. LÓGICA DA KEY (MATEMÁTICA) ]]
 local function GetDailyKey()
@@ -31,7 +47,7 @@ end
 
 -- [[ 2. FUNÇÃO QUE CARREGA O HUB COMPLETO ]]
 local function LoadHub()
-    -- Remove a tela de key e o Blur
+    -- Remove a tela de key e o Blur se existirem
     if CoreGui:FindFirstChild("DavzxKeySystemUI") then
         CoreGui.DavzxKeySystemUI:Destroy()
     end
@@ -41,7 +57,7 @@ local function LoadHub()
     
     StarterGui:SetCore("SendNotification", {
         Title = "SUCESSO",
-        Text = "Key Válida! Carregando Hub...",
+        Text = "Carregando Hub...",
         Duration = 5
     })
 
@@ -1478,6 +1494,17 @@ local function LoadHub()
     end)
 end
 
+-- [[ CHECK PREMIUM - VERIFICAÇÃO SE É O USER (BYPASS) ]]
+if table.find(PremiumList, LocalPlayer.Name) then
+    StarterGui:SetCore("SendNotification", {
+        Title = "PREMIUM DETECTADO",
+        Text = "Bem-vindo, " .. LocalPlayer.Name .. "! Acesso liberado.",
+        Duration = 5
+    })
+    LoadHub()
+    return -- Para a execução aqui, pulando o sistema de key
+end
+
 -- [[ 3. VERIFICAÇÃO DE SAVE ]]
 local function CheckSavedKey()
     local TodayKey = GetDailyKey()
@@ -1597,7 +1624,7 @@ Instance.new("UICorner", BtnCheck).CornerRadius = UDim.new(0, 6)
 
 -- Footer / Discord (LINK ATUALIZADO)
 local Footer = Instance.new("TextLabel", MainFrame)
-Footer.Text = "Support: discord.gg/KRgnN2cEVn" -- SEU NOVO DISCORD
+Footer.Text = "Support: discord.gg/KRgnN2cEVn"
 Footer.TextColor3 = Theme.TextGray
 Footer.TextSize = 10
 Footer.Font = Enum.Font.Gotham
