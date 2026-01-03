@@ -7,47 +7,34 @@ local StarterGui = game:GetService("StarterGui")
 local HttpService = game:GetService("HttpService")
 local Lighting = game:GetService("Lighting")
 
--- ====================================================
--- [[ CONFIGURAÇÕES GERAIS ]]
--- ====================================================
-
--- 1. CONFIGURAÇÃO DA KEY
 local KeySettings = {
-    LinkGetKey = "https://4br.me/pyLjc", -- SEU LINK
+    LinkGetKey = "https://4br.me/pyLjc",
     FileName = "DavzxHub_Key_Save.txt",
     NameHub = "Davzx Hub"
 }
 
--- 2. LISTA DE PESSOAS QUE NÃO PRECISAM DE KEY (VIP/PREMIUM)
 local PremiumList = {
-    "Ntgui_ttk",  -- Você
-    "tchook", -- Exemplo (pode adicionar mais separando por vírgula)
-    "OutraPessoa"
+    "Ntgui_ttk",
+    "tchook"
 }
 
--- 3. CORES DO TEMA (HO HO STYLE)
 local Theme = {
     Background = Color3.fromRGB(25, 25, 25),
     DarkerBG = Color3.fromRGB(18, 18, 18),
-    Accent = Color3.fromRGB(220, 40, 40), -- Vermelho Sangue
+    Accent = Color3.fromRGB(220, 40, 40),
     TextWhite = Color3.fromRGB(255, 255, 255),
     TextGray = Color3.fromRGB(150, 150, 150)
 }
 
--- ====================================================
-
 local LocalPlayer = Players.LocalPlayer
 
--- [[ 1. LÓGICA DA KEY (MATEMÁTICA) ]]
 local function GetDailyKey()
     local d = os.date("!*t")
     local code = (d.day * 1024) + (d.month * 512) + d.year
     return "DAVZX-" .. code
 end
 
--- [[ 2. FUNÇÃO QUE CARREGA O HUB COMPLETO ]]
 local function LoadHub()
-    -- Remove a tela de key e o Blur se existirem
     if CoreGui:FindFirstChild("DavzxKeySystemUI") then
         CoreGui.DavzxKeySystemUI:Destroy()
     end
@@ -74,8 +61,6 @@ local function LoadHub()
             LocalPlayer = Players.PlayerAdded:Wait()
         end
         local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-
-        local SCRIPT_VERSION = "v0.1"
 
         local state = {
             Fly = false, Noclip = false, Speed = false, Esp = false, Aimbot = false,
@@ -333,7 +318,11 @@ local function LoadHub()
             if connections.Fly then connections.Fly:Disconnect() connections.Fly = nil end
             pcall(function() LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.new(0,0,0) end)
             if connections.Noclip then connections.Noclip:Disconnect() connections.Noclip = nil end
-            pcall(function() LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Physics) end)
+            
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+            end
+
             if connections.Speed then connections.Speed:Disconnect() connections.Speed = nil end
             pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed = 16 end)
             if connections.Esp then for _,c in pairs(connections.Esp) do c:Disconnect() end connections.Esp = nil end
@@ -465,7 +454,7 @@ local function LoadHub()
             new("TextLabel", { Parent = sectionsContainer, Text = "Support", Font = Enum.Font.GothamBold, TextSize = 13, TextColor3 = Color3.fromRGB(0, 255, 127), BackgroundTransparency = 1, Size = UDim2.new(1,0,0,20), TextXAlignment=Enum.TextXAlignment.Left }) 
             local btnCopyLink = new("TextButton", { Parent = sectionsContainer, Text = "Copiar Link Discord", Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = Color3.fromRGB(255,255,255), BackgroundColor3 = Color3.fromRGB(40, 110, 210), Size = UDim2.new(0.8, 0, 0, 24), AutoButtonColor = true })
             new("UICorner", { Parent = btnCopyLink, CornerRadius = UDim.new(0,6) })
-            btnCopyLink.MouseButton1Click:Connect(function() if setclipboard then setclipboard("https://discord.gg/TCTMsJMr2E") btnCopyLink.Text = "Link Copiado!" delay(2, function() btnCopyLink.Text = "Copiar Link Discord" end) end end)
+            btnCopyLink.MouseButton1Click:Connect(function() if setclipboard then setclipboard("https://discord.gg/KRgnN2cEVn") btnCopyLink.Text = "Link Copiado!" delay(2, function() btnCopyLink.Text = "Copiar Link Discord" end) end end)
             new("Frame", { Parent = sectionsContainer, Size = UDim2.new(1,0,0,4), BackgroundTransparency=1 })
             
             new("TextLabel", { Parent = sectionsContainer, Text = "Update Logs", Font = Enum.Font.GothamBold, TextSize = 13, TextColor3 = Color3.fromRGB(255, 170, 0), BackgroundTransparency = 1, Size = UDim2.new(1,0,0,20), TextXAlignment=Enum.TextXAlignment.Left }) 
@@ -1494,7 +1483,6 @@ local function LoadHub()
     end)
 end
 
--- [[ CHECK PREMIUM - VERIFICAÇÃO SE É O USER (BYPASS) ]]
 if table.find(PremiumList, LocalPlayer.Name) then
     StarterGui:SetCore("SendNotification", {
         Title = "PREMIUM DETECTADO",
@@ -1502,10 +1490,9 @@ if table.find(PremiumList, LocalPlayer.Name) then
         Duration = 5
     })
     LoadHub()
-    return -- Para a execução aqui, pulando o sistema de key
+    return 
 end
 
--- [[ 3. VERIFICAÇÃO DE SAVE ]]
 local function CheckSavedKey()
     local TodayKey = GetDailyKey()
     if isfile(KeySettings.FileName) then
@@ -1520,14 +1507,11 @@ if CheckSavedKey() then
     return
 end
 
--- [[ 4. UI MODERNA (ESTILO HOHO HUB) ]]
-
 local DavzxGUI = Instance.new("ScreenGui")
 DavzxGUI.Name = "DavzxKeySystemUI"
 DavzxGUI.Parent = CoreGui
 DavzxGUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Blur Effect para o fundo
 local Blur = Instance.new("BlurEffect", Lighting)
 Blur.Name = "DavzxBlur"
 Blur.Size = 0
@@ -1538,7 +1522,7 @@ MainFrame.Name = "MainFrame"
 MainFrame.Parent = DavzxGUI
 MainFrame.BackgroundColor3 = Theme.Background
 MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-MainFrame.Size = UDim2.new(0, 0, 0, 0) -- Começa pequeno para animar
+MainFrame.Size = UDim2.new(0, 0, 0, 0) 
 MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 MainFrame.BorderSizePixel = 0
 MainFrame.ClipsDescendants = true
@@ -1546,13 +1530,11 @@ MainFrame.ClipsDescendants = true
 local UICorner = Instance.new("UICorner", MainFrame)
 UICorner.CornerRadius = UDim.new(0, 10)
 
--- Borda Vermelha Brilhante
 local Stroke = Instance.new("UIStroke", MainFrame)
 Stroke.Color = Theme.Accent
 Stroke.Thickness = 2
 Stroke.Transparency = 0
 
--- Fundo com padrão (simulado com gradiente escuro)
 local Gradient = Instance.new("UIGradient", MainFrame)
 Gradient.Rotation = 45
 Gradient.Color = ColorSequence.new{
@@ -1560,7 +1542,6 @@ Gradient.Color = ColorSequence.new{
     ColorSequenceKeypoint.new(1, Color3.fromRGB(150,150,150))
 }
 
--- Título Principal (Logo)
 local Title = Instance.new("TextLabel", MainFrame)
 Title.Text = "DAVZX HUB"
 Title.Font = Enum.Font.GothamBlack
@@ -1579,7 +1560,6 @@ SubTitle.Size = UDim2.new(1, 0, 0, 20)
 SubTitle.Position = UDim2.new(0, 0, 0, 45)
 SubTitle.BackgroundTransparency = 1
 
--- Caixa de Input (Onde cola a key)
 local InputContainer = Instance.new("Frame", MainFrame)
 InputContainer.BackgroundColor3 = Theme.DarkerBG
 InputContainer.Size = UDim2.new(0.85, 0, 0, 45)
@@ -1600,7 +1580,6 @@ KeyBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 100)
 KeyBox.TextColor3 = Theme.TextWhite
 KeyBox.TextSize = 14
 
--- Botão Get Key
 local BtnGetKey = Instance.new("TextButton", MainFrame)
 BtnGetKey.Text = "GET KEY (LINK)"
 BtnGetKey.Font = Enum.Font.GothamBold
@@ -1611,18 +1590,16 @@ BtnGetKey.Position = UDim2.new(0.075, 0, 0.6, 0)
 BtnGetKey.TextSize = 12
 Instance.new("UICorner", BtnGetKey).CornerRadius = UDim.new(0, 6)
 
--- Botão Check Key
 local BtnCheck = Instance.new("TextButton", MainFrame)
 BtnCheck.Text = "VERIFICAR"
 BtnCheck.Font = Enum.Font.GothamBold
 BtnCheck.TextColor3 = Theme.TextWhite
-BtnCheck.BackgroundColor3 = Color3.fromRGB(40, 180, 80) -- Verde para confirmar
+BtnCheck.BackgroundColor3 = Color3.fromRGB(40, 180, 80)
 BtnCheck.Size = UDim2.new(0.4, 0, 0, 35)
 BtnCheck.Position = UDim2.new(0.525, 0, 0.6, 0)
 BtnCheck.TextSize = 12
 Instance.new("UICorner", BtnCheck).CornerRadius = UDim.new(0, 6)
 
--- Footer / Discord (LINK ATUALIZADO)
 local Footer = Instance.new("TextLabel", MainFrame)
 Footer.Text = "Support: discord.gg/KRgnN2cEVn"
 Footer.TextColor3 = Theme.TextGray
@@ -1632,7 +1609,6 @@ Footer.Size = UDim2.new(1, 0, 0, 20)
 Footer.Position = UDim2.new(0, 0, 0.88, 0)
 Footer.BackgroundTransparency = 1
 
--- Status Message
 local StatusMsg = Instance.new("TextLabel", MainFrame)
 StatusMsg.Text = ""
 StatusMsg.TextColor3 = Theme.Accent
@@ -1642,16 +1618,20 @@ StatusMsg.Size = UDim2.new(1, 0, 0, 20)
 StatusMsg.Position = UDim2.new(0, 0, 0.75, 0)
 StatusMsg.BackgroundTransparency = 1
 
--- Animação de Entrada
 TweenService:Create(MainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Back), {Size = UDim2.new(0, 320, 0, 240)}):Play()
-
--- [[ LÓGICA DOS BOTÕES ]]
 
 BtnGetKey.MouseButton1Click:Connect(function()
     if setclipboard then
         setclipboard(KeySettings.LinkGetKey)
         BtnGetKey.Text = "COPIADO!"
         BtnGetKey.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
+        
+        StarterGui:SetCore("SendNotification", {
+            Title = "Link Copiado!",
+            Text = "Cole no navegador para pegar a Key.",
+            Duration = 3
+        })
+
         task.wait(1)
         BtnGetKey.Text = "GET KEY (LINK)"
         BtnGetKey.BackgroundColor3 = Theme.Accent
@@ -1662,7 +1642,7 @@ end)
 
 BtnCheck.MouseButton1Click:Connect(function()
     local TodayKey = GetDailyKey()
-    local Input = KeyBox.Text:gsub("%s+", "") -- Remove espaços vazios
+    local Input = KeyBox.Text:gsub("%s+", "") 
     
     if Input == TodayKey then
         StatusMsg.TextColor3 = Color3.fromRGB(50, 255, 100)
@@ -1672,7 +1652,6 @@ BtnCheck.MouseButton1Click:Connect(function()
         writefile(KeySettings.FileName, TodayKey)
         
         task.wait(1)
-        -- Animação de Saída
         TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0,0,0,0)}):Play()
         TweenService:Create(Blur, TweenInfo.new(0.5), {Size = 0}):Play()
         task.wait(0.5)
@@ -1682,7 +1661,6 @@ BtnCheck.MouseButton1Click:Connect(function()
         StatusMsg.TextColor3 = Theme.Accent
         StatusMsg.Text = "KEY INVÁLIDA OU EXPIRADA!"
         
-        -- Efeito de "Tremer" erro
         local x = MainFrame.Position.X.Scale
         local y = MainFrame.Position.Y.Scale
         for i=1, 5 do
@@ -1695,7 +1673,6 @@ BtnCheck.MouseButton1Click:Connect(function()
     end
 end)
 
--- Fechar UI (Botãozinho de X opcional, adicionei lógica de drag)
 local Dragging, DragInput, DragStart, StartPos
 local function Update(input)
     local Delta = input.Position - DragStart
