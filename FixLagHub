@@ -1,4 +1,3 @@
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -457,7 +456,7 @@ local function showMainTab()
 
 	local statusFrame = new("Frame", { Parent = rightListContainer, Size = UDim2.new(1, 0, 0, 40), BackgroundTransparency = 1, LayoutOrder = 3 })
 	new("TextLabel", { Parent = statusFrame, Text = "Script Status", Font = Enum.Font.GothamBold, TextSize = 12, TextColor3 = accentColor, Size = UDim2.new(1,0,0,20), BackgroundTransparency = 1, TextXAlignment = Enum.TextXAlignment.Left })
-	new("TextLabel", { Parent = statusFrame, Text = "Script On, NÃO ULTILIZE A OPÇÃO "Redefinir" ESTÁ BUGADA TEMPORIAMENTE ⚠️", Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = Color3.fromRGB(85, 255, 127), Size = UDim2.new(1,0,0,20), Position = UDim2.new(0,0,0,20), BackgroundTransparency = 1, TextXAlignment = Enum.TextXAlignment.Left, TextScaled = true, TextWrapped = true })
+	new("TextLabel", { Parent = statusFrame, Text = "Script On. NÃO UTILIZE A OPÇÃO Redefinir ATÉ ARRUMARMOS O BUG!!", Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = Color3.fromRGB(85, 255, 127), Size = UDim2.new(1,0,0,20), Position = UDim2.new(0,0,0,20), BackgroundTransparency = 1, TextXAlignment = Enum.TextXAlignment.Left, TextScaled = true, TextWrapped = true })
 
 	local uiAccumulator, friendCheckTimer = 0, 5
 	serverInfoUpdater = RunService.Heartbeat:Connect(function(dt)
